@@ -40,7 +40,7 @@ public class MainActivityFragment extends Fragment {
                 "Sat - Sunny - 76 / 68"
         };
 
-        // Forecast data is convert from String array into ArrayList
+        // Forecast data is converted from String array into ArrayList
         List<String> weekForecast = new ArrayList<String>(Arrays.asList(forecastArray));
 
         // Now that we have some dummy forecast data, create an ArrayAdapter.
