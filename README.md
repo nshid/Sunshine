@@ -1,2 +1,0 @@
-# Sunshine
-Weather app tutorial
