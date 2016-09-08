@@ -37,6 +37,9 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="app.com.example.a65400k.sunshine.MainActivity" />
         </activity>
+        <provider
+            android:authorities="app.com.example.a65400k.sunshine"
+            android:name=".data.WeatherProvider" />
     </application>
 
 </manifest>
