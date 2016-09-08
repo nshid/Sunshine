@@ -1,10 +1,8 @@
 package app.com.example.a65400k.sunshine;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -17,12 +15,20 @@ import android.view.View;
 public class MainActivity extends AppCompatActivity {
 
     private final String LOG_TAG = MainActivity.class.getSimpleName();
+    private final String FORECASTFRAGMENT_TAG = "FFTAG";
+
+    private String mLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.d(LOG_TAG, "OnCreate!");
+        mLocation = Utility.getPreferredLocation(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.container, new ForecastFragment(), FORECASTFRAGMENT_TAG)
+                    .commit();
+        }
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -65,11 +71,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void openPreferredLocationInMap() {
-        SharedPreferences sharedPrefs =
-                PreferenceManager.getDefaultSharedPreferences(this);
-        String location = sharedPrefs.getString(
-                getString(R.string.pref_location_key),
-                getString(R.string.pref_location_default));
+        String location = Utility.getPreferredLocation(this);
 
         // Using the URI scheme for showing a location found on a map.  This super-handy
         // intent can is detailed in the "Common Intents" page of Android's developer site:
@@ -91,30 +93,39 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        Log.d(LOG_TAG, "OnCreate!");
+        //Log.d(LOG_TAG, "OnPause!");
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        Log.d(LOG_TAG, "OnStop!");
+        //Log.d(LOG_TAG, "OnStop!");
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        Log.d(LOG_TAG, "OnStart!");
+        //Log.d(LOG_TAG, "OnStart!");
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        Log.d(LOG_TAG, "OnDestroy!");
+        //Log.d(LOG_TAG, "OnDestroy!");
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        Log.d(LOG_TAG, "OnResume!");
+        //Log.d(LOG_TAG, "OnResume!");
+        String location = Utility.getPreferredLocation( this );
+        // update the location in our second pane using the fragment manager
+        if (location != null && !location.equals(mLocation)) {
+            ForecastFragment ff = (ForecastFragment)getSupportFragmentManager().findFragmentByTag(FORECASTFRAGMENT_TAG);
+            if ( null != ff ) {
+                ff.onLocationChanged();
+            }
+            mLocation = location;
+        }
     }
 }
