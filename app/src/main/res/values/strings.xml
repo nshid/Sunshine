@@ -25,6 +25,8 @@
     <!-- Default postal code for location preference [CHAR LIMIT=NONE] -->
     <string name="pref_location_default" translatable="false">77040</string>
 
+    <!-- Strings for formatting weather-related data -->
+
     <!-- Labels for the temperature unit preference [CHAR LIMIT=30] -->
     <string name="pref_units_label">Pick Your Units</string>
     <!-- Labels for the temperature unit option preference [CHAR LIMIT=25] -->
@@ -36,12 +38,12 @@
     <string name="pref_units_metric" translatable="false">metric</string>
     <string name="pref_units_imperial" translatable="false">imperial</string>
 
-    <!-- Date label when displaying today's weather forecast [CHAR LIMIT=20] -->
+    <!-- Language-specific constants -->
     <string name="today">Today</string>
-    <!-- Date label when displaying tomorrow's weather forecast [CHAR LIMIT=20] -->
+    <!-- For labeling tomorrow's forecast [CHAR LIMIT=15] -->
     <string name="tomorrow">Tomorrow</string>
-    <!-- Date format for displaying day of week and date (i.e. Mon Jun 1) [CHAR LIMIT=20] -->
-    <string name="format_full_friendly_date"><xliff:g id="day">%1$s</xliff:g>, <xliff:g id="date">%2$s</xliff:g></string>
+    <!-- Date format [CHAR LIMIT=NONE] -->
+    <string name="format_full_friendly_date"><xliff:g id="month">%1$s</xliff:g>, <xliff:g id="day">%2$s</xliff:g></string>
 
     <!-- Strings for formatting weather-related data -->
     <!-- Temperature format [CHAR LIMIT=5] -->
@@ -60,5 +62,7 @@
     <string name="format_pressure">Pressure: <xliff:g id="pressure">%1.0f</xliff:g> hPa</string>
     <!-- Humidity format CHAR LIMIT=25]-->
     <string name="format_humidity">Humidity: <xliff:g id="humidity">%1.0f</xliff:g> %%</string>
+    <!-- Compass Description -->
+    <string name="compass_description">Compass pointing in direction of wind</string>
 
 </resources>
