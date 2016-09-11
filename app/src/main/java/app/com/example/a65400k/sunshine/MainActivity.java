@@ -5,13 +5,13 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
-import android.support.v4.view.ViewCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+
+import app.com.example.a65400k.sunshine.sync.SunshineSyncAdapter;
 
 public class MainActivity extends AppCompatActivity implements ForecastFragment.Callback {
 
@@ -37,17 +37,19 @@ public class MainActivity extends AppCompatActivity implements ForecastFragment.
             // fragment transaction.
             if (savedInstanceState == null) {
                 getSupportFragmentManager().beginTransaction()
-                       .replace(R.id.weather_detail_container, new DetailFragment(), DETAILFRAGMENT_TAG)
+                        .replace(R.id.weather_detail_container, new DetailFragment(), DETAILFRAGMENT_TAG)
                         .commit();
             }
         } else {
             mTwoPane = false;
-            ViewCompat.setElevation(findViewById(R.id.main_container), 0f);
+            //getSupportActionBar().setElevation(0f);
         }
 
         ForecastFragment forecastFragment =  ((ForecastFragment)getSupportFragmentManager()
-            .findFragmentById(R.id.fragment_forecast));
+                .findFragmentById(R.id.fragment_forecast));
         forecastFragment.setUseTodayLayout(!mTwoPane);
+
+        SunshineSyncAdapter.initializeSyncAdapter(this);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -82,62 +84,12 @@ public class MainActivity extends AppCompatActivity implements ForecastFragment.
             return true;
         }
 
-        if (id == R.id.action_map) {
-            openPreferredLocationInMap();
-            return true;
-        }
-
         return super.onOptionsItemSelected(item);
-    }
-
-    private void openPreferredLocationInMap() {
-        String location = Utility.getPreferredLocation(this);
-
-        // Using the URI scheme for showing a location found on a map.  This super-handy
-        // intent can is detailed in the "Common Intents" page of Android's developer site:
-        // http://developer.android.com/guide/components/intents-common.html#Maps
-        Uri geoLocation = Uri.parse("geo:0,0?").buildUpon()
-                .appendQueryParameter("q", location)
-                .build();
-
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setData(geoLocation);
-
-        if (intent.resolveActivity(getPackageManager()) != null) {
-            startActivity(intent);
-        } else {
-            Log.d(LOG_TAG, "Couldn't call " + location + ", no receiving apps installed!");
-        }
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        //Log.d(LOG_TAG, "OnPause!");
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        //Log.d(LOG_TAG, "OnStop!");
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        //Log.d(LOG_TAG, "OnStart!");
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        //Log.d(LOG_TAG, "OnDestroy!");
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        //Log.d(LOG_TAG, "OnResume!");
         String location = Utility.getPreferredLocation( this );
         // update the location in our second pane using the fragment manager
         if (location != null && !location.equals(mLocation)) {

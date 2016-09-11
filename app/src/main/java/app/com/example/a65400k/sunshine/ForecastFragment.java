@@ -1,14 +1,14 @@
 package app.com.example.a65400k.sunshine;
 
-import android.content.SharedPreferences;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -19,31 +19,40 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import app.com.example.a65400k.sunshine.data.WeatherContract;
+import app.com.example.a65400k.sunshine.sync.SunshineSyncAdapter;
 
 /**
- * A placeholder fragment containing a simple view.
+ * Encapsulates fetching the forecast and displaying it as a {@link ListView} layout.
  */
 public class ForecastFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
+    public static final String LOG_TAG = ForecastFragment.class.getSimpleName();
+    private ForecastAdapter mForecastAdapter;
+
+    private ListView mListView;
+    private int mPosition = ListView.INVALID_POSITION;
+    private boolean mUseTodayLayout;
+
+    private static final String SELECTED_KEY = "selected_position";
 
     private static final int FORECAST_LOADER = 0;
     // For the forecast view we're showing only a small subset of the stored data.
     // Specify the columns we need.
     private static final String[] FORECAST_COLUMNS = {
-        // In this case the id needs to be fully qualified with a table name, since
-        // the content provider joins the location & weather tables in the background
-        // (both have an _id column)
-        // On the one hand, that's annoying.  On the other, you can search the weather table
-        // using the location set by the user, which is only in the Location table.
-        // So the convenience is worth it.
-        WeatherContract.WeatherEntry.TABLE_NAME + "." + WeatherContract.WeatherEntry._ID,
-        WeatherContract.WeatherEntry.COLUMN_DATE,
-        WeatherContract.WeatherEntry.COLUMN_SHORT_DESC,
-        WeatherContract.WeatherEntry.COLUMN_MAX_TEMP,
-        WeatherContract.WeatherEntry.COLUMN_MIN_TEMP,
-        WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING,
-        WeatherContract.WeatherEntry.COLUMN_WEATHER_ID,
-        WeatherContract.LocationEntry.COLUMN_COORD_LAT,
-        WeatherContract.LocationEntry.COLUMN_COORD_LONG
+            // In this case the id needs to be fully qualified with a table name, since
+            // the content provider joins the location & weather tables in the background
+            // (both have an _id column)
+            // On the one hand, that's annoying.  On the other, you can search the weather table
+            // using the location set by the user, which is only in the Location table.
+            // So the convenience is worth it.
+            WeatherContract.WeatherEntry.TABLE_NAME + "." + WeatherContract.WeatherEntry._ID,
+            WeatherContract.WeatherEntry.COLUMN_DATE,
+            WeatherContract.WeatherEntry.COLUMN_SHORT_DESC,
+            WeatherContract.WeatherEntry.COLUMN_MAX_TEMP,
+            WeatherContract.WeatherEntry.COLUMN_MIN_TEMP,
+            WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING,
+            WeatherContract.WeatherEntry.COLUMN_WEATHER_ID,
+            WeatherContract.LocationEntry.COLUMN_COORD_LAT,
+            WeatherContract.LocationEntry.COLUMN_COORD_LONG
     };
 
     // These indices are tied to FORECAST_COLUMNS.  If FORECAST_COLUMNS changes, these
@@ -58,14 +67,6 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     static final int COL_COORD_LAT = 7;
     static final int COL_COORD_LONG = 8;
 
-    private ForecastAdapter mForecastAdapter;
-
-    private ListView mListView;
-    private int mPosition = ListView.INVALID_POSITION;
-    private boolean mUseTodayLayout;
-
-    private static final String SELECTED_KEY = "selected_position";
-
     /**
      * A callback interface that all activities containing this fragment must
      * implement. This mechanism allows activities to be notified of item
@@ -76,8 +77,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
          * DetailFragmentCallback for when an item has been selected.
          */
         public void onItemSelected(Uri dateUri);
-     }
-
+    }
 
     public ForecastFragment() {
     }
@@ -91,7 +91,6 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         inflater.inflate(R.menu.forecastfragment, menu);
     }
 
@@ -101,16 +100,22 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-        if (id == R.id.action_refresh) {
-            updateWeather();
+//        if (id == R.id.action_refresh) {
+//            updateWeather();
+//            return true;
+//        }
+        if (id == R.id.action_map) {
+            openPreferredLocationInMap();
             return true;
         }
+
         return super.onOptionsItemSelected(item);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
         // The ForecastAdapter will take data from a source and
         // use it to populate the ListView it's attached to.
         mForecastAdapter = new ForecastAdapter(getActivity(), null, 0);
@@ -120,7 +125,6 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         // Get a reference to the ListView, and attach this adapter to it.
         mListView = (ListView) rootView.findViewById(R.id.listview_forecast);
         mListView.setAdapter(mForecastAdapter);
-
         // We'll call our MainActivity
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
@@ -169,10 +173,36 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     }
 
     private void updateWeather() {
-        FetchWeatherTask weatherTask = new FetchWeatherTask(getActivity());
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        String location = Utility.getPreferredLocation(getActivity());
-        weatherTask.execute(location);
+        // sync immediately if not a duplicate listview item
+        if ( false == mForecastAdapter.getCursor().moveToFirst() )
+        {
+            SunshineSyncAdapter.syncImmediately(getActivity());
+        }
+    }
+
+    private void openPreferredLocationInMap() {
+        // Using the URI scheme for showing a location found on a map.  This super-handy
+        // intent can is detailed in the "Common Intents" page of Android's developer site:
+        // http://developer.android.com/guide/components/intents-common.html#Maps
+        if ( null != mForecastAdapter ) {
+            Cursor c = mForecastAdapter.getCursor();
+            if ( null != c ) {
+                c.moveToPosition(0);
+                String posLat = c.getString(COL_COORD_LAT);
+                String posLong = c.getString(COL_COORD_LONG);
+                Uri geoLocation = Uri.parse("geo:" + posLat + "," + posLong);
+
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setData(geoLocation);
+
+                if (intent.resolveActivity(getActivity().getPackageManager()) != null) {
+                    startActivity(intent);
+                } else {
+                    Log.d(LOG_TAG, "Couldn't call " + geoLocation.toString() + ", no receiving apps installed!");
+                }
+            }
+
+        }
     }
 
     @Override
@@ -220,7 +250,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     }
 
     @Override
-    public void onLoaderReset(Loader<Cursor> Loader) {
+    public void onLoaderReset(Loader<Cursor> loader) {
         mForecastAdapter.swapCursor(null);
     }
 
