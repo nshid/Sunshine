@@ -1,7 +1,0 @@
-URL QUERY FOR "SUNSHINE" APP
-- 1 week
-- JSON
-- metric (°C <-> °F)
-- postal code 77040
-
-http://api.openweathermap.org/data/2.5/forecast/daily?q=77040&mode=json&units=metric&cnt=7&appid=3b1eb0180a4cf8954b02a8373ba815b3
